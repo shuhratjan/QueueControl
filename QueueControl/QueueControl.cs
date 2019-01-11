@@ -6,13 +6,12 @@ namespace QueueControl
     {
         public int First { get; set; }
         public int Last { get; set; }
-        public PersonQueue[] ArrQueue;
+        public PersonQueue[] ArrQueue; // для хранение объектов
 
         public QueueControl(int size)
         {
             ArrQueue = new PersonQueue[size];
-            First = -1;
-            Last = -1;
+            First = Last = -1;
         }
 
         public Person dequeue()
@@ -20,37 +19,64 @@ namespace QueueControl
             if (!isEmpty())
             {
                 PersonQueue tmp = ArrQueue[First];
+                ArrQueue[First] = null;
                 if (tmp.nextPersonId != 0)
                 {
-                    First = tmp.nextPersonId;
-                    tmp.QPerson = null;
-                    tmp = null;
+                    First = getPlace(tmp.nextPersonId);
+                    tmp.QPerson = null; tmp = null;
+
                     return ArrQueue[First].QPerson;
                 }
                 else
                 {
-                    First = -1;
+                    First = Last = -1;
                 }
                 tmp = null;
             }
             return null;
         }
 
+
+        //Return index of object in array
+        public int getPlace(int id)
+        {
+            int index = -1;
+            for (int i = 0; i < ArrQueue.Length; i++)
+            {
+                if (ArrQueue[i] != null && ArrQueue[i].QPerson.PersonId == id)
+                {
+                    index = i;
+                    break;
+                }
+            }
+            return index;
+        }
+
         public void enqueue(Person person)
         {
-            if (size() > Last)
+            int sizeOfQueue = size();
+            if (sizeOfQueue < ArrQueue.Length)
             {
                 PersonQueue tmp = new PersonQueue(person);
-                if (isEmpty())
+                if (sizeOfQueue==0)
                 {
                     First = Last = 0;
                     ArrQueue[First] = tmp;
+
                 }
                 else
                 {
-                    ArrQueue[Last].nextPersonId = Last + 1;
-                    Last++;
-                    ArrQueue[Last] = tmp;
+                    for(int i=0; i<ArrQueue.Length; i++)
+                    {
+                        if (ArrQueue[i] == null)
+                        {
+                            ArrQueue[Last].nextPersonId = person.PersonId;
+                            Last = i;
+                            ArrQueue[Last] = tmp;
+                            break;
+                        }
+                    }
+                    
                 }
             }
             else
@@ -61,49 +87,61 @@ namespace QueueControl
 
         public bool isEmpty()
         {
-            return (First == -1) ? true : false;
+            return (size() == 0) ? true : false;
         }
 
         public int size()
         {
-            if (isEmpty()) return 0;
+            if (First == -1) return 0;
 
             int size = 1, current = First;
+
             while (ArrQueue[current].nextPersonId != 0)
             {
-                current++;
                 size++;
+                current = getPlace(ArrQueue[current].nextPersonId);
             }
             return size;
         }
 
         public void sortByID()
         {
-            
-            if (isEmpty())
+            int sizeOfQueue = size();
+            if (sizeOfQueue==0)
             {
                 Console.WriteLine("The queue is Empty");
+                return;
             }
+
+            PersonQueue[] arrSortedById = new PersonQueue[sizeOfQueue];
+            int index = First;
             
-            PersonQueue[] arrSortedById = new PersonQueue[size()];
-            for (int i = First; i <Last; i++)
+            for(int i=0; i<sizeOfQueue; i++)
             {
-                if(arrSortedById[i].QPerson.PersonId> arrSortedById[i + 1].QPerson.PersonId)
+                arrSortedById[i] = ArrQueue[index];
+                if (ArrQueue[index].nextPersonId != 0)
                 {
-                    PersonQueue tmp = ArrQueue[i+1];
-                    for (int j=i; j>First; j--)
+                    index = getPlace(ArrQueue[index].nextPersonId);
+                }
+                
+            }
+
+            for (int i = 0; i < sizeOfQueue; i++)
+            {
+                for (int j = i + 1; j <sizeOfQueue-1; j++)
+                {
+                    int a = arrSortedById[i].QPerson.PersonId;
+                    int b = arrSortedById[j].QPerson.PersonId;
+                    if (a > b)
                     {
-                        ArrQueue[j+1] = ArrQueue[j];
-                        if (tmp.QPerson.PersonId > ArrQueue[j - 1].QPerson.PersonId)
-                        {
-                            ArrQueue[j] = tmp;
-                            break;
-                        }
+                        var tmp = arrSortedById[i];
+                        arrSortedById[i] = arrSortedById[j];
+                        arrSortedById[j] = tmp;
                     }
                 }
             }
 
-            foreach(PersonQueue personQueue in arrSortedById)
+            foreach (PersonQueue personQueue in arrSortedById)
             {
                 Console.WriteLine(personQueue.QPerson.PersonId + " => " + personQueue.QPerson.PhoneNumber);
             }
@@ -111,7 +149,46 @@ namespace QueueControl
 
         public void sortByPhoneNumber()
         {
-            
+            int sizeOfQueue = size();
+            if (sizeOfQueue == 0)
+            {
+                Console.WriteLine("The queue is Empty");
+                return;
+            }
+
+            PersonQueue[] arrSortedByPhoneNumber = new PersonQueue[sizeOfQueue];
+            int index = First;
+
+            for (int i = 0; i < sizeOfQueue; i++)
+            {
+                arrSortedByPhoneNumber[i] = ArrQueue[index];
+                if (ArrQueue[index].nextPersonId != 0)
+                {
+                    index = getPlace(ArrQueue[index].nextPersonId);
+                }
+
+            }
+
+            for (int i = 0; i < sizeOfQueue; i++)
+            {
+                for (int j = i + 1; j <sizeOfQueue-1; j++)
+                {
+                    string a = arrSortedByPhoneNumber[i].QPerson.PhoneNumber;
+                    string b = arrSortedByPhoneNumber[j].QPerson.PhoneNumber;
+                    if (a.CompareTo(b) > 0)
+                    {
+                        var tmp = arrSortedByPhoneNumber[i];
+                        arrSortedByPhoneNumber[i] = arrSortedByPhoneNumber[j];
+                        arrSortedByPhoneNumber[j] = tmp;
+                    }
+                }
+            }
+
+
+            foreach (PersonQueue personQueue in arrSortedByPhoneNumber)
+            {
+                Console.WriteLine(" { " + personQueue.QPerson.PersonId + " => " + personQueue.QPerson.PhoneNumber + " } ");
+            }
         }
 
     }
